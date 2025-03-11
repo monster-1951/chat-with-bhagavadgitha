@@ -196,27 +196,35 @@ Formulate an improved question:`
   };
 }
 
-
 // /**
 //  * Generate answer
 //  * @param {typeof GraphState.State} state - The current state of the agent, including all messages.
 //  * @returns {Promise<Partial<typeof GraphState.State>>} - The updated state with the new message added to the list of messages.
 //  */
 
-export async function generate(state: typeof GraphState.State): Promise<Partial<typeof GraphState.State>> {
+export async function generate(
+  state: typeof GraphState.State
+): Promise<Partial<typeof GraphState.State>> {
   console.log("---GENERATE---");
 
   const { messages } = state;
   const question = messages[0].content as string;
   // Extract the most recent ToolMessage
-  const lastToolMessage = messages.slice().reverse().find((msg) => msg.getType() === "tool");
+  const lastToolMessage = messages
+    .slice()
+    .reverse()
+    .find((msg) => msg.getType() === "tool");
   if (!lastToolMessage) {
     throw new Error("No tool message found in the conversation history");
   }
 
   const docs = lastToolMessage.content as string;
 
-  const prompt = await pull<ChatPromptTemplate>("rlm/rag-prompt");
+  const prompt =
+    ChatPromptTemplate.fromTemplate(`You are an assistant for answering the questions related to Bhagavadgitha. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Answer point wise and keep the answer concise.
+Question: {question} 
+Context: {context} 
+Answer:`);
 
   const llm = new ChatOpenAI({
     model: "gpt-3.5-turbo",

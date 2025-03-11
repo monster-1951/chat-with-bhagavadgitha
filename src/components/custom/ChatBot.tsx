@@ -1,17 +1,23 @@
-'use client';
-import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { motion } from 'framer-motion';
-import { Send, Loader2 } from 'lucide-react';
-import Image from 'next/image';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+"use client";
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { motion } from "framer-motion";
+import { Send, Loader2 } from "lucide-react";
+import Image from "next/image";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Message {
-  role: 'user' | 'bot';
+  role: "user" | "bot";
   content: string;
 }
 
@@ -28,37 +34,49 @@ const sampleQuestions = [
 
 export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    const newMessage: Message = { role: 'user', content: input };
+    const newMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, newMessage]);
-    setInput('');
+    setInput("");
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/ask', { input });
-      setMessages((prev) => [...prev, { role: 'bot', content: response.data.content }]);
+      const response = await axios.post("/api/ask", { input });
+      console.log(response);
+      setMessages((prev) => [...prev, { role: "bot", content: response.data }]);
     } catch (error) {
-      console.log(error)
-      setMessages((prev) => [...prev, { role: 'bot', content: 'Error: Unable to fetch response.' }]);
+      console.log(error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "bot", content: "Error: Unable to fetch response." },
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   return (
     <div className="flex flex-col h-[95vh] justify-center w-full max-w-2xl mx-auto p-4 bg-gray-900 text-white rounded-2xl shadow-lg">
       <ScrollArea className="flex-1 p-2 space-y-4 overflow-auto">
-        <Image className='h-52 w-fit mx-auto mt-2' alt='Krishna.png' src={'/Krishna.png'} width={1000} height={1000} />
-        <h1 className='text-center text-xl font-bold underline'>Chat with Bhagavad Gita</h1>
+        <Image
+          className="h-52 w-fit mx-auto mt-2"
+          alt="Krishna.png"
+          src={"/Krishna.png"}
+          width={1000}
+          height={1000}
+        />
+        <h1 className="text-center text-xl font-bold underline">
+          Chat with Bhagavad Gita
+        </h1>
         {messages.map((msg, index) => (
           <motion.div
             key={index}
@@ -66,11 +84,28 @@ export default function ChatBot() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className={`p-3 w-fit max-w-xs ${msg.role === 'user' ? 'ml-auto bg-blue-600' : 'bg-gray-800'} p-3 mt-4`}>
-              <CardContent className="text-white">{msg.content}</CardContent>
+            <Card
+              className={`p-3 w-fit max-w-xs ${
+                msg.role === "user" ? "ml-auto bg-blue-600" : "bg-gray-800"
+              } p-3 mt-4`}
+            >
+              <CardContent className="text-white">
+                {msg.content.includes("\n") ? (
+                  <ul className="list-disc list-none space-y-1 text-gray-300" >
+                    {msg.content.split("\n").map((point, idx) => (
+                      <li key={idx} className="leading-relaxed">
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  msg.content
+                )}
+              </CardContent>
             </Card>
           </motion.div>
         ))}
+
         {loading && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -107,9 +142,13 @@ export default function ChatBot() {
           placeholder="Type a message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-        <Button onClick={sendMessage} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
+        <Button
+          onClick={sendMessage}
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
           {loading ? <Loader2 className="animate-spin" /> : <Send />}
         </Button>
       </div>
