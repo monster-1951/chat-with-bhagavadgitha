@@ -91,7 +91,7 @@ export default function ChatBot() {
             >
               <CardContent className="text-white">
                 {msg.content.includes("\n") ? (
-                  <ul className="list-disc list-none space-y-1 text-gray-300" >
+                  <ul className="list-none space-y-1 text-gray-300" >
                     {msg.content.split("\n").map((point, idx) => (
                       <li key={idx} className="leading-relaxed">
                         {point}
