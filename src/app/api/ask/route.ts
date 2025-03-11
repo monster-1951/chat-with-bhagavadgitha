@@ -16,7 +16,6 @@ export async function POST(req: Request) {
   };
 
   let finalState: FinalState | undefined;
-  let responseContent: Record<string, any> = {}; // Store the final AI response
 
   for await (const output of await app.stream(inputs)) {
     for (const [key, value] of Object.entries(output)) {
@@ -33,15 +32,7 @@ export async function POST(req: Request) {
       );
       console.log("---\n");
 
-      // Store final response content if the node is 'generate'
-      if (key === "generate") {
-        responseContent = {
-          node: key,
-          type: lastMsg._getType(),
-          content: lastMsg.content,
-          tool_calls: lastMsg.tool_calls,
-        };
-      }
+      // Store final response content if the node is 'generate
 
       finalState = value as FinalState; // Ensure correct type assignment
     }
