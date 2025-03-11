@@ -1,51 +1,55 @@
-import { app } from "@/lib/Graph"; 
+import { app } from "@/lib/Graph";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
-
-// Define types for expected response structure
-
 
 interface FinalState {
   messages: AIMessage[];
 }
 
 export async function POST(req: Request) {
-  const { input } = await req.json();
+  try {
+    const { input } = await req.json();
 
-  const inputs = {
-    messages: [new HumanMessage(input)],
-  };
+    const inputs = {
+      messages: [new HumanMessage(input)],
+    };
 
-  let finalState: FinalState | undefined;
+    let finalState: FinalState | undefined;
 
-  for await (const output of await app.stream(inputs)) {
-    for (const [key, value] of Object.entries(output)) {
-      const lastMsg = output[key].messages?.[output[key].messages.length - 1];
+    const stream = await app.stream(inputs);
 
-      console.log(`Output from node: '${key}'`);
-      console.dir(
-        {
-          type: lastMsg?._getType(),
-          content: lastMsg?.content,
-          tool_calls: lastMsg?.tool_calls,
-        },
-        { depth: null }
-      );
-      console.log("---\n");
+    for await (const output of stream) {
+      for (const [key, value] of Object.entries(output) as [string, FinalState][]) {
+        const lastMsg = value.messages?.[value.messages.length - 1];
 
-      // Store final response content if the node is 'generate
+        console.log(`Output from node: '${key}'`);
+        console.dir(
+          {
+            type: lastMsg?._getType(),
+            content: lastMsg?.content,
+            tool_calls: lastMsg?.tool_calls,
+          },
+          { depth: null }
+        );
+        console.log("---\n");
 
-      finalState = value as FinalState; // Ensure correct type assignment
+        // Store only the final response
+        finalState = value;
+      }
     }
+
+    console.log(JSON.stringify({ finalState }, null, 2));
+
+    const finalResponse = finalState?.messages?.[0]?.content || "No content found";
+    console.log("Final Response Content:", finalResponse);
+
+    // Send final response to the client
+    return new Response(JSON.stringify( finalResponse ), {
+      status: 200,
+    });
+  } catch (error) {
+    console.error("Error processing request:", error);
+    return new Response(JSON.stringify("Internal Server Error" ), {
+      status: 500,
+    });
   }
-
-  console.log(JSON.stringify({ finalState }, null, 2));
-
-  // Safely access finalState properties using optional chaining
-  console.log(
-    "Final Response Content:",
-    finalState?.messages?.[0].content || "No content found"
-  );
-
-  // Return the extracted response
-  return Response.json( finalState?.messages?.[0].content || "No content found");
 }
