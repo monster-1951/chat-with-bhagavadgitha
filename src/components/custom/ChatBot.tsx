@@ -43,6 +43,7 @@ export default function ChatBot() {
       const response = await axios.post('/api/ask', { input });
       setMessages((prev) => [...prev, { role: 'bot', content: response.data.content }]);
     } catch (error) {
+      console.log(error)
       setMessages((prev) => [...prev, { role: 'bot', content: 'Error: Unable to fetch response.' }]);
     } finally {
       setLoading(false);
